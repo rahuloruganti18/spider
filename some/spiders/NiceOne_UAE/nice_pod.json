@@ -1,0 +1,220 @@
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "CALLA Makeup Garden of Dreams Powder Blush",
+  "image": [
+    "https://d1aq4ubbxe020v.cloudfront.net/image/product/39450/60983161_1779704239_60c432c0c333eab33a34c64bfe900a37.jpg?format=auto",
+    "https://d1aq4ubbxe020v.cloudfront.net/image/product/39450/34307343_1779622579_f40cc1aa5569f0d60e2d81dee9951bf1.jpg?format=png",
+    "https://d1aq4ubbxe020v.cloudfront.net/image/product/39450/5942176_1779622528_ac40139b9748479468c3ed81b114e063.png?format=png"
+  ],
+  "description": "-",
+  "brand": {
+    "@type": "Brand",
+    "name": "CALLA Makeup",
+    "url": "https://niceonesa.com/en/CALLA Makeup"
+  },
+  "manufacturer": "CALLA Makeup",
+  "sku": "B-02.038",
+  "isbn": "6288008520742",
+  "category": {
+    "@type": "Thing",
+    "name": "Makeup",
+    "url": "https://niceonesa.com/en/makeup"
+  },
+  "review": [
+    {
+      "@type": "Review",
+      "name": "بشا*****",
+      "reviewBody": "لون فايري روز خيااالي انوثه مره مره واضح والعلبه كيوووت كشخه  ",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": 5,
+        "bestRating": 5,
+        "worstRating": 1
+      },
+      "datePublished": "2026/09/04",
+      "author": {
+        "@type": "Person",
+        "name": "بشا*****"
+      }
+    },
+    {
+      "@type": "Review",
+      "name": "ريم*****",
+      "reviewBody": "مرههههه واوووووو",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": 5,
+        "bestRating": 5,
+        "worstRating": 1
+      },
+      "datePublished": "2026/09/03",
+      "author": {
+        "@type": "Person",
+        "name": "ريم*****"
+      }
+    },
+    {
+      "@type": "Review",
+      "name": "سار*****",
+      "reviewBody": "مايحتاج وربي من اول مسحة اللون خرافي انصح فيه ",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": 5,
+        "bestRating": 5,
+        "worstRating": 1
+      },
+      "datePublished": "2026/09/01",
+      "author": {
+        "@type": "Person",
+        "name": "سار*****"
+      }
+    },
+    {
+      "@type": "Review",
+      "name": "sary *****",
+      "reviewBody": "توفقت بالاختيار وجودة المنتج فاااااق توقعاتي ♥️",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": 5,
+        "bestRating": 5,
+        "worstRating": 1
+      },
+      "datePublished": "2026/09/01",
+      "author": {
+        "@type": "Person",
+        "name": "sary *****"
+      }
+    },
+    {
+      "@type": "Review",
+      "name": "تها*****",
+      "reviewBody": "روعه واللون حلو اخذت المشمشي",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": 5,
+        "bestRating": 5,
+        "worstRating": 1
+      },
+      "datePublished": "2026/08/31",
+      "author": {
+        "@type": "Person",
+        "name": "تها*****"
+      }
+    },
+    {
+      "@type": "Review",
+      "name": "رشا*****",
+      "reviewBody": "من افضل الأشياء اللي اخذتها يكفي بس شكلها الخارجي يفتح النفس واللون اتعب وانا امدح فيه ",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": 5,
+        "bestRating": 5,
+        "worstRating": 1
+      },
+      "datePublished": "2026/08/31",
+      "author": {
+        "@type": "Person",
+        "name": "رشا*****"
+      }
+    },
+    {
+      "@type": "Review",
+      "name": "ولا*****",
+      "reviewBody": "جميل و ألوانه حلوه و ثابت ❤️❤️",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": 5,
+        "bestRating": 5,
+        "worstRating": 1
+      },
+      "datePublished": "2026/08/31",
+      "author": {
+        "@type": "Person",
+        "name": "ولا*****"
+      }
+    },
+    {
+      "@type": "Review",
+      "name": "ريم*****",
+      "reviewBody": "بقمنت مرره",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": 4,
+        "bestRating": 5,
+        "worstRating": 1
+      },
+      "datePublished": "2026/08/03",
+      "author": {
+        "@type": "Person",
+        "name": "ريم*****"
+      }
+    },
+    {
+      "@type": "Review",
+      "name": "mona *****",
+      "reviewBody": "روووعهههههه مره خيالي وجودته رهيبه",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": 5,
+        "bestRating": 5,
+        "worstRating": 1
+      },
+      "datePublished": "2026/08/03",
+      "author": {
+        "@type": "Person",
+        "name": "mona *****"
+      }
+    },
+    {
+      "@type": "Review",
+      "name": "سار*****",
+      "reviewBody": "لونه بيبي بينك",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": 5,
+        "bestRating": 5,
+        "worstRating": 1
+      },
+      "datePublished": "2026/08/02",
+      "author": {
+        "@type": "Person",
+        "name": "سار*****"
+      }
+    }
+  ],
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": 4.9,
+    "bestRating": 5,
+    "worstRating": 1,
+    "ratingCount": 55,
+    "reviewCount": 55
+  },
+  "offers": {
+    "url": "https://niceonesa.com/en/calla-makeup-garden-of-dreams-powder-blush-n39450",
+    "price": 42.25,
+    "priceValidUntil": "2026-10-03",
+    "priceCurrency": "SAR",
+    "availability": "https://schema.org/InStock",
+    "itemCondition": "https://schema.org/NewCondition",
+    "@type": "Offer",
+    "itemOffered": {
+      "@id": "#Product"
+    },
+    "offeredBy": {
+      "@id": "#Organization",
+      "@type": "Organization",
+      "name": "Nice One",
+      "url": "https://niceonesa.com/en",
+      "logo": "https://niceonesa.com/_nuxt/img/f53548c.png",
+      "sameAs": [
+        "https://www.facebook.com/pg/niceonesa/about/",
+        "https://twitter.com/NICEONESA",
+        "https://www.instagram.com/niceonesa/?hl=en",
+        "https://www.youtube.com/channel/UCu8c7LeOLpt1pPICrkHBKiw",
+        "https://www.linkedin.com/company/niceonesa/"
+      ]
+    }
+  }
+}
