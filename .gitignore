@@ -27,8 +27,8 @@ dist/
 
 # Crawler output, snapshots, and runtime logs
 *.log
-some/some/database/
-some/some/settings.py
+/some/database/
+/some/settings.py
 *.json
 some/*.csv
 some/*.html
