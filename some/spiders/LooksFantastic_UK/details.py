@@ -12,7 +12,7 @@ class LOOKSUKDetailsSpider(scrapy.Spider):
 
     allowed_domains = ["lookfantastic.com"]
 
-    currentversion = 1
+    currentversion = 2
 
     async def start(self):
 
@@ -29,6 +29,7 @@ class LOOKSUKDetailsSpider(scrapy.Spider):
         self.cursor = self.connection.cursor()
         site_code = "LOOKSUK"
         product_table = f"{site_code}_Products"
+        currentversion = self.currentversion
 
         print("DATABASE CONNECTED", flush=True)
 
@@ -66,6 +67,8 @@ class LOOKSUKDetailsSpider(scrapy.Spider):
                     "product_id": product_id,
                     "product_url": product_url,
                     "product_table": product_table,
+                    "site_code": site_code,
+                    "currentversion": currentversion,
                 },
                 dont_filter=True,
             )
@@ -75,6 +78,8 @@ class LOOKSUKDetailsSpider(scrapy.Spider):
         product_id = response.meta["product_id"]
         product_url = response.meta["product_url"]
         product_table = response.meta["product_table"]
+        site_code = response.meta["site_code"]
+        currentversion = response.meta["currentversion"]
 
         print()
         print("############################################")
@@ -272,6 +277,8 @@ class LOOKSUKDetailsSpider(scrapy.Spider):
             product_table=product_table,
             rating=rating,
             product_total_ratings=review_count,
+            site_code=site_code,
+            currentversion=currentversion,
         )
 
     def closed(self, reason):

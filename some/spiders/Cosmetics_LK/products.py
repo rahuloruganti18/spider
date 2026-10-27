@@ -15,7 +15,7 @@ class ExampleSpider(scrapy.Spider):
 
     print("######## EXAMPLE ANIMAL FILE LOADED ########")
 
-    name = "allure_prod"
+    name = "cosmetics_prod"
     # allowed_domains = ["https://www.animalis.com/"]
     # start_urls = ["https://www.animalis.com/"]
 
@@ -23,7 +23,7 @@ class ExampleSpider(scrapy.Spider):
 
         super().__init__(*args, **kwargs)
 
-        self.site_id = 1018
+        self.site_id = 998
         site = get_site_config(self.site_id)
 
         self.site_code = site["site_code"]
@@ -142,18 +142,15 @@ class ExampleSpider(scrapy.Spider):
         product_count = ""
         print("########################################page")
 
-        product_elements = response.xpath(
-            ".//li[contains(@class, 'product type-product')]"
-        )
         product_urls = []
-        for product in product_elements:
-            url = product.xpath(".//a/@href").get()
-            if url:
-                product_urls.append(response.urljoin(url))
+
+        product_urls = response.xpath("//product-info/@data-url").getall()
+        product_urls = [response.urljoin(url) for url in product_urls if url]
 
         # print("PRODUCT URLS:", product_urls, flush=True)
         print("TOTAL PRODUCTS:", len(product_urls), flush=True)
-        exit()
+        # exit()
+
         # ============================================================
         # CREATE REQUESTS
         # ============================================================
@@ -182,21 +179,17 @@ class ExampleSpider(scrapy.Spider):
                 dont_filter=True,
             )
 
-        product_count_text = response.xpath(
-            "//div[contains(@class, 'woocommerce-result-count')]//span/text()"
-        ).get()
+        product_count_text = response.css("#ProductCountDesktop::text").get()
 
-        match = (
-            re.search(r"\bof\s+(\d+)\s+results\b", product_count_text)
+        product_count = (
+            int(re.search(r"\d+", product_count_text).group())
             if product_count_text
-            else None
+            else 0
         )
 
-        product_count = int(match.group(1)) if match else 0
+        print("PRODUCT COUNT:", product_count, flush=True)
 
-        print("TOTAL PRODUCTS:", product_count, flush=True)
-
-        next_page = response.xpath('//link[@rel="next"]/@href').get()
+        next_page = response.css('link[rel="next"]::attr(href)').get()
 
         print("NEXT PAGE:", next_page, flush=True)
 
@@ -238,6 +231,7 @@ class ExampleSpider(scrapy.Spider):
         else:
 
             print("NO MORE PAGES", flush=True)
+
             print("CRAWLING FINISHED", flush=True)
 
             # --------------------------------------------------
@@ -276,12 +270,14 @@ class ExampleSpider(scrapy.Spider):
             yield item
 
         # item = archivedetails()
+
         # item["currentversion"] = currentversion
         # item["site_code"] = site_code
 
         # print("######## CATEGORY UPDATE ITEM ########", flush=True)
         # print("Site Code:", site_code, flush=True)
         # print("CURRENT VERSION:", currentversion, flush=True)
+
         # yield item
 
     def product_parse(self, response):

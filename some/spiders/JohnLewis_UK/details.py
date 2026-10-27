@@ -8,11 +8,11 @@ from ...database.db import get_connection
 
 class JOHNUKDetailsSpider(scrapy.Spider):
 
-    name = "John_details"
+    name = "john_details"
 
     allowed_domains = ["https://www.johnlewis.com"]
 
-    currentversion = 1
+    currentversion = 2
     headers = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         "accept-language": "en-US,en;q=0.9",
@@ -47,6 +47,7 @@ class JOHNUKDetailsSpider(scrapy.Spider):
         self.cursor = self.connection.cursor()
         site_code = "JOHNUK"
         product_table = f"{site_code}_Products"
+        currentversion = self.currentversion
 
         print("DATABASE CONNECTED", flush=True)
 
@@ -81,6 +82,8 @@ class JOHNUKDetailsSpider(scrapy.Spider):
                     "product_id": product_id,
                     "product_url": product_url,
                     "product_table": product_table,
+                    "site_code": site_code,
+                    "currentversion": currentversion,
                 },
                 dont_filter=True,
             )
@@ -90,6 +93,8 @@ class JOHNUKDetailsSpider(scrapy.Spider):
         product_id = response.meta["product_id"]
         product_url = response.meta["product_url"]
         product_table = response.meta["product_table"]
+        site_code = response.meta["site_code"]
+        currentversion = response.meta["currentversion"]
 
         print()
         print("############################################")
@@ -160,6 +165,8 @@ class JOHNUKDetailsSpider(scrapy.Spider):
             description=description,
             multiimage_url=multiimage_url,
             product_table=product_table,
+            site_code=site_code,
+            currentversion=currentversion,
         )
 
     def closed(self, reason):

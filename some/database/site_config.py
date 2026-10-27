@@ -65,7 +65,7 @@ def get_site_config(site_id):
             "site_id": site_id,
             "site_code": site_code,
             "category_table": f"{site_code}_Categories",
-            "product_table": f"{site_code}_Products",
+            "products_table": f"{site_code}_Products",
             "archive_table": f"{site_code}_Products_Archive",
         }
 
