@@ -15,15 +15,15 @@ class ExampleSpider(scrapy.Spider):
 
     print("######## EXAMPLE ANIMAL FILE LOADED ########")
 
-    name = "cosmetics_prod"
-    # allowed_domains = ["https://www.animalis.com/"]
-    # start_urls = ["https://www.animalis.com/"]
+    name = "allure_prod"
+    # allowed_domains = ["https://allure.com.ng/"]
+    # start_urls = ["https://allure.com.ng/"]
 
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
 
-        self.site_id = 998
+        self.site_id = 1018
         site = get_site_config(self.site_id)
 
         self.site_code = site["site_code"]
@@ -142,10 +142,16 @@ class ExampleSpider(scrapy.Spider):
         product_count = ""
         print("########################################page")
 
+        product_elements = response.xpath(
+            ".//li[contains(@class, 'product type-product')]"
+        )
+
         product_urls = []
 
-        product_urls = response.xpath("//product-info/@data-url").getall()
-        product_urls = [response.urljoin(url) for url in product_urls if url]
+        for product in product_elements:
+            url = product.xpath(".//a/@href").get()
+            if url:
+                product_urls.append(response.urljoin(url))
 
         # print("PRODUCT URLS:", product_urls, flush=True)
         print("TOTAL PRODUCTS:", len(product_urls), flush=True)
@@ -179,17 +185,21 @@ class ExampleSpider(scrapy.Spider):
                 dont_filter=True,
             )
 
-        product_count_text = response.css("#ProductCountDesktop::text").get()
+        product_count_text = response.xpath(
+            "//div[contains(@class, 'woocommerce-result-count')]//span/text()"
+        ).get()
 
-        product_count = (
-            int(re.search(r"\d+", product_count_text).group())
+        match = (
+            re.search(r"\bof\s+(\d+)\s+results\b", product_count_text)
             if product_count_text
-            else 0
+            else None
         )
 
-        print("PRODUCT COUNT:", product_count, flush=True)
+        product_count = int(match.group(1)) if match else 0
 
-        next_page = response.css('link[rel="next"]::attr(href)').get()
+        print("TOTAL PRODUCTS:", product_count, flush=True)
+
+        next_page = response.xpath('//link[@rel="next"]/@href').get()
 
         print("NEXT PAGE:", next_page, flush=True)
 
@@ -302,33 +312,84 @@ class ExampleSpider(scrapy.Spider):
         print("########################################page")
         # exit()
 
-        json_ld_list = response.css('script[type="application/ld+json"]::text').getall()
+        # Extract JSON-LD structured data
+        json_ld_scripts = response.css(
+            'script[type="application/ld+json"]::text'
+        ).getall()
 
-        for json_text in json_ld_list:
+        for script in json_ld_scripts:
             try:
-                data = json.loads(json_text)
+                data = json.loads(script)
+            except json.JSONDecodeError:
+                continue
 
-                # Process only Product JSON
-                if data.get("@type") != "Product":
+            # Handle JSON-LD objects and @graph structures
+            objects = (
+                data.get("@graph", [])
+                if isinstance(data, dict) and "@graph" in data
+                else (data if isinstance(data, list) else [data])
+            )
+
+            for obj in objects:
+                if not isinstance(obj, dict):
                     continue
 
-                title = data.get("name")
-                product_url = data.get("url")
-                image = data.get("image", [None])[0]
-                product_id = data.get("sku")
-                description = data.get("description")
-                brand = data.get("brand", {}).get("name")
+                obj_type = obj.get("@type", [])
 
-                offers = data.get("offers", [])
-                if offers:
-                    price = offers[0].get("price")
-                    availability = offers[0].get("availability")
+                if isinstance(obj_type, str):
+                    obj_type = [obj_type]
+
+                if "Product" not in obj_type:
+                    continue
+
+                # Product details
+                title = obj.get("name")
+                product_id = obj.get("sku")
+
+                brand_data = obj.get("brand", {})
+                if isinstance(brand_data, dict):
+                    brand = brand_data.get("name")
                 else:
-                    price = None
-                    is_available = None
+                    brand = brand_data
 
-                is_available = 1 if "InStock" in availability else 0
+                description = obj.get("description")
 
+                # Product image
+                images = obj.get("image", [])
+
+                if isinstance(images, str):
+                    image = images
+                elif isinstance(images, list) and images:
+                    first_image = images[0]
+                    if isinstance(first_image, dict):
+                        image = first_image.get("url")
+                    else:
+                        image = first_image
+
+                # Price and availability
+                offers = obj.get("offers", {})
+
+                if isinstance(offers, list):
+                    offers = offers[0] if offers else {}
+
+                if isinstance(offers, dict):
+                    price = offers.get("price")
+                    product_url = offers.get("url", response.url)
+
+                    availability = offers.get("availability", "")
+                    is_available = availability.rstrip("/").endswith("InStock")
+
+                # Extract rating and number of ratings
+                aggregate_rating = obj.get("aggregateRating", {})
+
+                if isinstance(aggregate_rating, dict):
+                    rating = aggregate_rating.get("ratingValue")
+                    noof_rating = aggregate_rating.get(
+                        "ratingCount"
+                    ) or aggregate_rating.get("reviewCount")
+                else:
+                    rating = None
+                    noof_rating = None
                 print("TITLE:", title)
                 print("PRICE:", price)
                 print("URL:", product_url)
@@ -336,8 +397,8 @@ class ExampleSpider(scrapy.Spider):
                 # print("SKU:", variant)
                 print("SKU:", product_id)
                 print("BRAND:", brand)
-                # print("RATING:", rating)
-                # print("TOTAL RATINGS:", noof_rating)
+                print("RATING:", rating)
+                print("TOTAL RATINGS:", noof_rating)
                 print("DESCRIPTION:", description)
                 print("IS_AVAILABLE:", is_available)
                 # print("MULTI IMAGES:", multiimages)
@@ -353,9 +414,9 @@ class ExampleSpider(scrapy.Spider):
                 # item["variant"] = variant
                 item["sku"] = product_id
                 item["brand"] = brand
-                # tem["rating"] = rating
-                # item["product_rating"] = rating
-                # item["product_total_ratings"] = noof_rating
+                item["rating"] = rating
+                item["product_rating"] = rating
+                item["product_total_ratings"] = noof_rating
                 item["description"] = description
                 item["cat_id"] = cat_id
                 item["category_name"] = category_name
@@ -369,6 +430,4 @@ class ExampleSpider(scrapy.Spider):
                 # item["multiimages"] = multiimages
 
                 yield item
-
-            except json.JSONDecodeError:
-                continue
+                break

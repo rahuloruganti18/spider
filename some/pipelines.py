@@ -2,6 +2,7 @@ import sys
 import pyodbc
 import datetime
 import os
+import re
 from itemadapter import ItemAdapter
 from .items import (
     CategoryItem,
@@ -405,6 +406,9 @@ class DatabasePipeline:
         img = item.get("img")
         image = item.get("image")
         sku = item.get("sku")
+        ProductCodevalue = item.get("ProductCodevalue")
+        if not ProductCodevalue or not ProductCodevalue.strip():
+            ProductCodevalue = sku
         unitprice = item.get("unitprice")
         rating = item.get("rating")
         ProductRating = item.get("ProductRating")
@@ -427,7 +431,7 @@ class DatabasePipeline:
         gencatname = item.get("gencatname")
         unitprice = item.get("unitprice")
         qty = item.get("qty")
-        ProductCodeName = "ItemNo"
+        ProductCodeName = item.get("ProductCodeName")
         brand = item.get("brand")
 
         currentversion = item.get("currentversion")
@@ -436,6 +440,7 @@ class DatabasePipeline:
         usdequal = item.get("usdequal")
         category_name = item.get("category_name")
         genprice = price
+        price = re.sub(r"[^\d.]", "", price)
 
         # if item.get("site_code"):
         #     self.site_code = item.get("site_code")
@@ -556,7 +561,7 @@ class DatabasePipeline:
                     variant,
                     unitprice,
                     ProductCodeName,
-                    sku,
+                    ProductCodevalue,
                     datetime.datetime.now(),
                     currentversion,
                     qty,
@@ -592,6 +597,7 @@ class DatabasePipeline:
                     error_message = (
                         f"[{error_time}] "
                         f"INSERT Failed SKU: {sku} | "
+                        f"URL: {link} | "
                         f"ERROR: {str(e)}"
                     )
 
@@ -665,7 +671,7 @@ class DatabasePipeline:
 
                         log_file.write(error_message + "\n")
 
-            self.archive_required = True
+            # self.archive_required = True
 
         except Exception as e:
 
@@ -910,6 +916,20 @@ class DatabasePipeline:
             print(f"IS ENGLISH: {is_english}", flush=True)
             print(f"CURRENT VERSION: {currentversion}", flush=True)
 
+            now = datetime.datetime.now()
+            error_time = now.strftime("%Y-%m-%d %H:%M:%S")
+            error_message = (
+                f"[{error_time}] "
+                f"PRODUCT ID: {site_code} | "
+                f"IS ENGLISH: {is_english} | "
+                f"SITE NAME: {SiteName}| "
+                f"CURRENT VERSION: {currentversion}"
+            )
+
+            with open(self.log_file_path, "a", encoding="utf-8") as log_file:
+
+                log_file.write(error_message + "\n")
+
             # ==================================================
             # VERSION 1
             # ==================================================
@@ -969,8 +989,27 @@ class DatabasePipeline:
 
                     self.connection.commit()
 
+                    now = datetime.datetime.now()
+                    error_time = now.strftime("%Y-%m-%d %H:%M:%S")
+                    error_message = (
+                        f"[{error_time}] " f"NATIVE: {native_rows} products copied"
+                    )
+
+                    with open(self.log_file_path, "a", encoding="utf-8") as log_file:
+
+                        log_file.write(error_message + "\n")
+
                 else:
-                    print("IS ENGLISH = 1 -> NATIVE SKIPPED", flush=True)
+                    print(f"IS ENGLISH = 1 -> NATIVE SKIPPED", flush=True)
+                    now = datetime.datetime.now()
+                    error_time = now.strftime("%Y-%m-%d %H:%M:%S")
+                    error_message = (
+                        f"[{error_time}] " f"IS ENGLISH = 1 -> NATIVE SKIPPED"
+                    )
+
+                    with open(self.log_file_path, "a", encoding="utf-8") as log_file:
+
+                        log_file.write(error_message + "\n")
 
                 # ==================================================
                 # ARCHIVE - create table if it does not exist
@@ -1018,6 +1057,16 @@ class DatabasePipeline:
                 print(f"ARCHIVE: {rows_affected} products copied", flush=True)
 
                 self.connection.commit()
+
+                now = datetime.datetime.now()
+                error_time = now.strftime("%Y-%m-%d %H:%M:%S")
+                error_message = (
+                    f"[{error_time}] " f"ARCHIVE: {rows_affected} products copied"
+                )
+
+                with open(self.log_file_path, "a", encoding="utf-8") as log_file:
+
+                    log_file.write(error_message + "\n")
             else:
 
                 # Native only when IsEnglish = 0
@@ -1035,9 +1084,29 @@ class DatabasePipeline:
 
                     print(f"NATIVE: {native_rows} products copied", flush=True)
 
+                    now = datetime.datetime.now()
+                    error_time = now.strftime("%Y-%m-%d %H:%M:%S")
+                    error_message = (
+                        f"[{error_time}] " f"NATIVE: {native_rows} products copied"
+                    )
+
+                    with open(self.log_file_path, "a", encoding="utf-8") as log_file:
+
+                        log_file.write(error_message + "\n")
+
                 else:
 
-                    print("IS ENGLISH = 1 -> NATIVE SKIPPED", flush=True)
+                    print(f"IS ENGLISH = 1 -> NATIVE SKIPPED", flush=True)
+
+                    now = datetime.datetime.now()
+                    error_time = now.strftime("%Y-%m-%d %H:%M:%S")
+                    error_message = (
+                        f"[{error_time}] " f"IS ENGLISH = 1 -> NATIVE SKIPPED"
+                    )
+
+                    with open(self.log_file_path, "a", encoding="utf-8") as log_file:
+
+                        log_file.write(error_message + "\n")
 
                 # Archive always
                 self.cursor.execute(f"SET IDENTITY_INSERT {archive_table} ON")
@@ -1051,6 +1120,16 @@ class DatabasePipeline:
                 self.cursor.execute(f"SET IDENTITY_INSERT {archive_table} OFF")
 
                 print(f"ARCHIVE: {rows_affected} products copied", flush=True)
+
+                now = datetime.datetime.now()
+                error_time = now.strftime("%Y-%m-%d %H:%M:%S")
+                error_message = (
+                    f"[{error_time}] " f"ARCHIVE: {rows_affected} products copied"
+                )
+
+                with open(self.log_file_path, "a", encoding="utf-8") as log_file:
+
+                    log_file.write(error_message + "\n")
 
             # ==================================================
             # PREVIOUS VERSION
@@ -1068,6 +1147,14 @@ class DatabasePipeline:
             prevcount = row2[0] if row2 else 0
 
             print(f"PREVIOUS VERSION COUNT: {prevcount}", flush=True)
+
+            now = datetime.datetime.now()
+            error_time = now.strftime("%Y-%m-%d %H:%M:%S")
+            error_message = f"[{error_time}] " f"PREVIOUS VERSION COUNT: {prevcount}"
+
+            with open(self.log_file_path, "a", encoding="utf-8") as log_file:
+
+                log_file.write(error_message + "\n")
 
             query = f"""SELECT TOP 1 RecordDate FROM {products_table} WITH (NOLOCK) WHERE Version = ? ORDER BY RecordDate ASC"""
 
@@ -1105,7 +1192,19 @@ class DatabasePipeline:
 
             print(f"HISTORY INSERTED: VersionCount = {rows_affected}", flush=True)
 
-            print("ARCHIVE / NATIVE / HISTORY COMPLETED", flush=True)
+            print(f"ARCHIVE / NATIVE / HISTORY COMPLETED", flush=True)
+
+            now = datetime.datetime.now()
+            error_time = now.strftime("%Y-%m-%d %H:%M:%S")
+            error_message = (
+                f"[{error_time}] "
+                f"HISTORY INSERTED: VersionCount = {rows_affected} | "
+                f"ARCHIVE / NATIVE / HISTORY COMPLETED"
+            )
+
+            with open(self.log_file_path, "a", encoding="utf-8") as log_file:
+
+                log_file.write(error_message + "\n")
 
         except Exception as e:
 

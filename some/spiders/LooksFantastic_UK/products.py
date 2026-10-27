@@ -198,16 +198,16 @@ class ExampleSpider(scrapy.Spider):
             # Product image
             # --------------------------------------------------
 
-            img = product.css("img.first-image::attr(src)").get()
+            image = product.css("img.first-image::attr(src)").get()
 
-            if not img:
-                img = product.css("img::attr(src)").get()
+            if not image:
+                image = product.css("img::attr(src)").get()
 
-            if not img:
-                img = product.css("img::attr(data-src)").get()
+            if not image:
+                image = product.css("img::attr(data-src)").get()
 
-            if img:
-                img = response.urljoin(img)
+            if image:
+                image = response.urljoin(image)
 
             # --------------------------------------------------
             # Product SKU
@@ -226,7 +226,7 @@ class ExampleSpider(scrapy.Spider):
             print("TITLE :", title)
             print("LINK  :", link)
             print("PRICE :", price)
-            print("IMG   :", img)
+            print("IMG   :", image)
             print("SKU   :", sku)
             print("--------------------------------")
             # exit()
@@ -237,7 +237,7 @@ class ExampleSpider(scrapy.Spider):
             item["title"] = title
             item["price"] = price
             item["link"] = link
-            item["img"] = img
+            item["image"] = image
             item["sku"] = sku
 
             item["cat_id"] = response.meta["cat_id"]

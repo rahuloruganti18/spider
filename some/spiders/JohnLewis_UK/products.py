@@ -92,7 +92,7 @@ class ExampleSpider(scrapy.Spider):
         usdequal = get_conversion_rate(site_code)
         # print(usdequal)
         # exit()
-        sql = f"SELECT SubCategoryID,SubCategoryName,SubCategoryURL,CurrentVersion FROM {category_table} WITH (NOLOCK) WHERE SubCategoryID NOT IN (SELECT ParentCategoryID FROM {category_table} WHERE ParentCategoryID IS NOT NULL) AND PriceICCategoryID IS NOT NULL ORDER BY SubCategoryID"
+        sql = f"SELECT SubCategoryID,SubCategoryName,SubCategoryURL,CurrentVersion FROM {category_table} WITH (NOLOCK) WHERE SubCategoryID NOT IN (SELECT ParentCategoryID FROM {category_table} WHERE ParentCategoryID IS NOT NULL) AND PriceICCategoryID IS NOT NULL AND SubCategoryName NOT LIKE '%all%' ORDER BY SubCategoryID"
 
         cursor.execute(sql)
         rows = cursor.fetchall()
@@ -161,6 +161,10 @@ class ExampleSpider(scrapy.Spider):
         usdequal = response.meta["usdequal"]
         category_table = response.meta["category_table"]
         print("########################################page")
+
+        title = link = image = sku = description = brand = offers = price = (
+            is_available
+        ) = was_price = rating = None
 
         next_data = response.css("script#__NEXT_DATA__::text").get()
 
@@ -278,7 +282,7 @@ class ExampleSpider(scrapy.Spider):
             print("BRAND:", brand, flush=True)
             print("VOLUME:", volume, flush=True)
             print("IS_AVAILABLE:", is_available, flush=True)
-            exit()
+            # exit()
 
             # Later you can yield this to pipeline/database
             item = ProductItem()
