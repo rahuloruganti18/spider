@@ -2,6 +2,8 @@ import scrapy
 from ...items import ProductItem, CategoryDetailsItem
 import pyodbc
 import json
+import datetime
+import os
 import re
 
 from ...database.db import get_connection
@@ -30,6 +32,31 @@ class ExampleSpider(scrapy.Spider):
         self.archive_table = site["archive_table"]
 
         print("SITE CODE:", self.site_code, flush=True)
+        now = datetime.datetime.now()
+        log_date = now.strftime("%Y-%m-%d")
+
+        if self.site_code:
+
+            log_dir = rf"C:\Logs\{self.site_code}"
+
+            os.makedirs(log_dir, exist_ok=True)
+
+            self.log_file_path = os.path.join(
+                log_dir, f"product_update_errors_{log_date}.log"
+            )
+
+            # print("SITE CODE:", self.site_code, flush=True)
+            print("LOG FILE:", self.log_file_path, flush=True)
+
+        else:
+            now = datetime.datetime.now()
+            log_date = now.strftime("%Y-%m-%d")
+            log_dir = r"C:\Logs\{site_code}"
+            os.makedirs(log_dir, exist_ok=True)
+
+            self.log_file_path = os.path.join(
+                log_dir, f"product_update_errors_{log_date}.log"
+            )
 
     async def start(self):
         print("######## START REQUESTS ########", flush=True)
@@ -64,7 +91,7 @@ class ExampleSpider(scrapy.Spider):
                 raise e
 
         usdequal = get_conversion_rate(site_code)
-        sql = f"SELECT top 1 SubCategoryID,SubCategoryName,SubCategoryURL,CurrentVersion FROM {category_table} WITH (NOLOCK) WHERE SubCategoryID NOT IN (SELECT ParentCategoryID FROM {category_table} WHERE ParentCategoryID IS NOT NULL) AND PriceICCategoryID IS NOT NULL AND SubCategoryName NOT LIKE '%all%' ORDER BY SubCategoryID"
+        sql = f"SELECT SubCategoryID,SubCategoryName,SubCategoryURL,CurrentVersion FROM {category_table} WITH (NOLOCK) WHERE SubCategoryID NOT IN (SELECT ParentCategoryID FROM {category_table} WHERE ParentCategoryID IS NOT NULL) AND PriceICCategoryID IS NOT NULL AND SubCategoryName NOT LIKE '%all%' ORDER BY SubCategoryID"
 
         cursor.execute(sql)
         rows = cursor.fetchall()
@@ -133,14 +160,14 @@ class ExampleSpider(scrapy.Spider):
         usdequal = response.meta["usdequal"]
         category_table = response.meta["category_table"]
         product_count = ""
-        print("########################################page")
+        print("########################################parse_page")
         connection = get_connection()
         cursor = connection.cursor()
         products_table = self.products_table
 
         try:
             product_elements = response.xpath(
-                ".//div[contains(@class, 'f-column product-column')]"
+                ".//article[contains(@class, 'tqln-card')]"
             )
 
             product_urls = []
@@ -158,11 +185,22 @@ class ExampleSpider(scrapy.Spider):
                 # exit()
 
                 cursor.execute(
-                    f"""SELECT productid, description FROM {products_table} WHERE ProductURL = ?""",
+                    f"""SELECT productid, description,Version FROM {products_table} WHERE ProductURL = ?""",
                     (url,),
                 )
 
                 product_record = cursor.fetchone()
+                if product_record and product_record[2] == currentversion:
+                    now = datetime.datetime.now()
+                    error_time = now.strftime("%Y-%m-%d %H:%M:%S")
+                    error_message = (
+                        f"[{error_time}] "
+                        f"PRODUCT RECORD IS SAME VERSION - ProductId : {product_record[0]} - ProductVersion : {product_record[2]}"
+                    )
+                    with open(self.log_file_path, "a", encoding="utf-8") as log_file:
+
+                        log_file.write(error_message + "\n")
+                    continue
 
                 if (
                     product_record
@@ -173,6 +211,16 @@ class ExampleSpider(scrapy.Spider):
                     # Existing product with a non-empty description.
                     # Pass the existing listing-page product element.
                     print("Calling existing product function")
+
+                    now = datetime.datetime.now()
+                    error_time = now.strftime("%Y-%m-%d %H:%M:%S")
+                    error_message = (
+                        f"[{error_time}] "
+                        f"Calling existing product function - ProductID : {product_record[0]} - ProductVersion : {product_record[2]}"
+                    )
+                    with open(self.log_file_path, "a", encoding="utf-8") as log_file:
+
+                        log_file.write(error_message + "\n")
                     # exit()
                     yield from self.existing_product(
                         response=response,
@@ -189,7 +237,7 @@ class ExampleSpider(scrapy.Spider):
 
         # print("PRODUCT URLS:", product_urls, flush=True)
         print("PRODUCTS URLS:", len(product_urls), flush=True)
-        exit()
+        # exit()
 
         # ============================================================
         # CREATE REQUESTS
@@ -219,22 +267,23 @@ class ExampleSpider(scrapy.Spider):
                 dont_filter=True,
             )
 
-        product_count = response.xpath('//p[@id="ProductCount"]/text()').re_first(
-            r"(\d+)"
-        )
+        product_count = response.xpath(
+            "normalize-space(//span[contains(@class, 'tqln-h1__n')]/text())"
+        ).re_first(r"\d+")
+
         product_count = int(product_count) if product_count else 0
 
         print("TOTAL PRODUCTS:", product_count, flush=True)
 
         next_page = response.xpath('//link[@rel="next"]/@href').get()
 
-        print("NEXT PAGE:", next_page, flush=True)
+        # print("NEXT PAGE:", next_page, flush=True)
+        # exit()
 
         if next_page:
             next_page = response.urljoin(next_page)
 
             print("NEXT PAGE:", next_page, flush=True)
-
             print("REQUESTING:", next_page, flush=True)
             # exit()
 
@@ -268,7 +317,6 @@ class ExampleSpider(scrapy.Spider):
         else:
 
             print("NO MORE PAGES", flush=True)
-
             print("CRAWLING FINISHED", flush=True)
             # exit()
 
@@ -332,96 +380,120 @@ class ExampleSpider(scrapy.Spider):
         site_code = response.meta["site_code"]
         usdequal = response.meta["usdequal"]
         category_table = response.meta["category_table"]
-        print("########################################page")
+        print("########################################Product_parse_page")
         # exit()
 
-        # json_ld_list = response.css('script[type="application/ld+json"]::text').getall()
-        json_ld_list = response.xpath(
-            '//script[@type="application/ld+json"]/text()'
-        ).getall()
+        json_ld = response.xpath(
+            '//script[@type="application/ld+json" and contains(@class, "rank-math-schema-pro")]/text()'
+        ).get()
 
-        for json_text in json_ld_list:
-            try:
-                data = json.loads(json_text)
+        product_data = {}
 
-                # Process only Product JSON
-                if data.get("@type") != "Product":
-                    continue
+        if json_ld:
+            data = json.loads(json_ld)
 
-                title = data.get("name")
-                product_url = data.get("url")
-                image = data.get("image")
-                product_id = data.get("sku")
-                description = (data.get("description") or "").strip()
+            for item in data.get("@graph", []):
+                if item.get("@type") == "Product":
+                    product_data = item
+                    break
 
-                if not description:
-                    description = (
-                        response.xpath(
-                            '//meta[@property="og:description"]/@content'
-                        ).get()
-                        or ""
-                    ).strip()
-                brand = data.get("brand", {}).get("name")
+        # Extract product fields
+        if product_data:
+            title = product_data.get("name")
+            product_url = product_data.get("@id", "").split("#")[0]
+            # description = (product_data.get("description") or "").strip()
+            product_id = product_data.get("sku")
+            ProductCodevalue = product_data.get("gtin")
 
-                offers = data.get("offers", {})
-                if offers:
-                    price = offers.get("price")
-                    availability = offers.get("availability")
-                else:
-                    price = None
-                    is_available = None
+            # if not description:
+            description = (
+                response.xpath(
+                    '//details[starts-with(@id, "tab-description")]'
+                    # '//div[contains(@class, "product-description")]'
+                ).get()
+                or ""
+            ).strip()
+            brand = product_data.get("brand", {}).get("name")
 
-                is_available = 1 if "InStock" in availability else 2
+            offers = product_data.get("offers", {})
+            if offers:
+                price = offers.get("price")
+                availability = offers.get("availability")
+            else:
+                price = None
+                is_available = None
 
-                ProductCodeName = "SKU"
+            is_available = 1 if "InStock" in availability else 2
 
-                print("TITLE:", title)
-                print("PRICE:", price)
-                print("URL:", product_url)
-                print("IMAGE:", image)
-                print("was_price:", was_price)
-                print("SKU:", product_id)
-                print("ProductCodeName:", ProductCodeName)
-                print("ProductCodevalue:", ProductCodevalue)
-                print("BRAND:", brand)
-                print("RATING:", rating)
-                print("TOTAL RATINGS:", noof_rating)
-                print("DESCRIPTION:", description)
-                print("IS_AVAILABLE:", is_available)
-                # print("MULTI IMAGES:", multiimages)
-                print("-" * 80)
-                # exit()
+            images = product_data.get("image", [])
 
-                item = ProductItem()
+            image = images[0].get("url", "") if images else ""
 
-                item["title"] = title
-                item["price"] = price
-                item["link"] = product_url
-                item["image"] = image
-                item["was_price"] = was_price
-                item["sku"] = product_id
-                item["ProductCodeName"] = ProductCodeName
-                item["ProductCodevalue"] = ProductCodevalue
-                item["brand"] = brand
-                item["rating"] = rating
-                item["product_rating"] = rating
-                item["product_total_ratings"] = noof_rating
-                item["description"] = description
-                item["cat_id"] = cat_id
-                item["category_name"] = category_name
-                item["category_url"] = category_url
-                item["currentversion"] = currentversion
-                item["site_id"] = site_id
-                item["site_code"] = site_code
-                item["usdequal"] = usdequal
-                item["category_table"] = category_table
-                item["is_available"] = is_available
-                # item["multiimages"] = multiimages
+            multiimages = " | ".join(
+                img.get("url", "") for img in images if img.get("url")
+            )
 
-                yield item
+            rating = product_data.get("aggregateRating", {}).get("ratingValue")
+            noof_rating = product_data.get("aggregateRating", {}).get("reviewCount")
 
-            except json.JSONDecodeError:
-                continue
+            was_price = response.xpath(
+                './/div[@class="tq-pdp-price-row tq3-pr"]//span[@class="woocommerce-Price-amount amount"]//bdi/text()'
+            ).get()
+            if was_price:
+                was_price = (
+                    was_price.replace("\xa0", "")
+                    .replace("OMR", "")
+                    .strip()
+                    .replace(",", ".")
+                )
+                was_price = float(was_price)
+
+            ProductCodeName = "gtin"
+
+            print("TITLE:", title)
+            print("PRICE:", price)
+            print("URL:", product_url)
+            print("IMAGE:", image)
+            print("was_price:", was_price)
+            print("SKU:", product_id)
+            print("ProductCodeName:", ProductCodeName)
+            print("ProductCodevalue:", ProductCodevalue)
+            print("BRAND:", brand)
+            print("RATING:", rating)
+            print("TOTAL RATINGS:", noof_rating)
+            print("DESCRIPTION:", description)
+            print("IS_AVAILABLE:", is_available)
+            print("MULTI IMAGES:", multiimages)
+            print("-" * 80)
+            # exit()
+
+            item = ProductItem()
+
+            item["title"] = title
+            item["price"] = price
+            item["link"] = product_url
+            item["image"] = image
+            item["was_price"] = was_price
+            item["sku"] = product_id
+            item["ProductCodeName"] = ProductCodeName
+            item["ProductCodevalue"] = ProductCodevalue
+            item["brand"] = brand
+            item["rating"] = rating
+            item["product_rating"] = rating
+            item["product_total_ratings"] = noof_rating
+            item["description"] = description
+            item["cat_id"] = cat_id
+            item["category_name"] = category_name
+            item["category_url"] = category_url
+            item["currentversion"] = currentversion
+            item["site_id"] = site_id
+            item["site_code"] = site_code
+            item["usdequal"] = usdequal
+            item["category_table"] = category_table
+            item["is_available"] = is_available
+            item["multiimages"] = multiimages
+
+            yield item
 
     def existing_product(self, response, product, productid, url):
 
@@ -444,41 +516,50 @@ class ExampleSpider(scrapy.Spider):
         site_code = response.meta["site_code"]
         usdequal = response.meta["usdequal"]
         category_table = response.meta["category_table"]
-        print("########################################page")
+        print("########################################existing_product_page")
         # Product title
-        # title = product.xpath(
-        #     "normalize-space(.//h3[contains(@class, 'product-card__title')]//text())"
-        # ).get()
         title = product.xpath(
-            "normalize-space(.//h3[contains(@class, 'product-card__title')]//span[contains(@class, 'reversed-link__text')]/text())"
+            "normalize-space(.//a[contains(@class, 'tqln-card__name')]/text())"
         ).get()
 
         # Product URL
         product_url = product.xpath(
-            ".//h3[contains(@class, 'product-card__title')]/a/@href"
+            ".//a[contains(@class, 'tqln-card__name')]/@href"
         ).get()
 
         product_url = response.urljoin(product_url) if product_url else url
 
         # Main product image
         image = product.xpath(
-            ".//div[contains(@class, 'product-card__image--main')]//img/@src"
+            ".//a[contains(@class, 'tqln-card__img')]//img/@src"
         ).get()
 
         if image:
             image = response.urljoin(image)
 
-        # Shopify product ID
-        product_id = product.xpath(".//input[@name='product-id']/@value").get()
+        # Product ID
+        data_id = product.xpath("./@data-id").get()
 
-        # Sale price
-        price = product.xpath(
-            "normalize-space(.//span[contains(@class, 'f-price-item--sale')][not(.//s)]/text())"
+        # Product SKU
+        product_id = product.xpath(
+            ".//button[contains(@class, 'add_to_cart_button')]/@data-product_sku"
         ).get()
 
-        # Original price
+        # Sale price / displayed price
+        price = product.xpath(
+            "normalize-space(.//span[contains(@class, 'tqln-card__price')]//bdi)"
+        ).get()
+        if price:
+            price = float(price.replace("OMR", "").strip().replace(",", "."))
+
         was_price = product.xpath(
-            "normalize-space(.//span[contains(@class, 'f-price-item--regular')]/s/text())"
+            "normalize-space(.//span[contains(@class, 'tqln-card__old')]//bdi)"
+        ).get()
+        if was_price:
+            was_price = float(price.replace("OMR", "").strip().replace(",", "."))
+        # Rating
+        rating = product.xpath(
+            ".//span[contains(@class, 'tqln-card__rate')]/@aria-label"
         ).get()
 
         print("TITLE:", title)
