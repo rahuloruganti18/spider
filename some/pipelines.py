@@ -671,7 +671,7 @@ class DatabasePipeline:
 
                         log_file.write(error_message + "\n")
 
-            # self.archive_required = True
+            self.archive_required = True
 
         except Exception as e:
 
@@ -796,7 +796,7 @@ class DatabasePipeline:
 
         update_values.append(product_id)
 
-        print("UPDATE QUERY:", query, flush=True)
+        # print("UPDATE QUERY:", query, flush=True)
         print("UPDATE VALUES:", update_values, flush=True)
 
         # =================================================
@@ -847,7 +847,7 @@ class DatabasePipeline:
 
                 log_file.write(error_message + "\n")
 
-        self.archive_required = True
+        # self.archive_required = True
 
         return item
 

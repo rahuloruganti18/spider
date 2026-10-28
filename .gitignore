@@ -5,7 +5,10 @@ venv/
 env/
 ENV/
 
-# Python cache and compiled files
+# Ignore all __init__.py files
+__init__.py
+
+# Ignore all Python cache directories
 __pycache__/
 **/__pycache__/
 *.py[cod]
@@ -27,7 +30,7 @@ dist/
 
 # Crawler output, snapshots, and runtime logs
 *.log
-/some/database/
+/some/database/db.py
 /some/settings.py
 *.json
 some/*.csv
@@ -41,3 +44,5 @@ Thumbs.db
 
 # Node artefacts
 node_modules/
+
+
