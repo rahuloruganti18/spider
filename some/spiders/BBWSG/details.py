@@ -11,7 +11,7 @@ class BBWSGDetailsSpider(scrapy.Spider):
 
     allowed_domains = ["bathandbodyworks.com.sg"]
 
-    currentversion = 2
+    currentversion = 3
 
     async def start(self):
 
