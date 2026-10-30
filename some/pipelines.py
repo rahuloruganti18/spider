@@ -671,7 +671,7 @@ class DatabasePipeline:
 
                         log_file.write(error_message + "\n")
 
-            self.archive_required = True
+            # self.archive_required = True
 
         except Exception as e:
 
@@ -847,7 +847,7 @@ class DatabasePipeline:
 
                 log_file.write(error_message + "\n")
 
-        # self.archive_required = True
+        self.archive_required = True
 
         return item
 
